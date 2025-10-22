@@ -1,0 +1,76 @@
+Project Title: ResolveIT – Smart Grievance and Feedback Management System
+
+🧾 Description
+
+Build a full-stack web application called ResolveIT, an online complaint and grievance management platform that improves transparency and efficiency in handling institutional grievances.
+
+The platform enables users to submit, track, and manage complaints either anonymously or via verified login, while admins can review, resolve, or escalate them.
+
+🎯 Core Objectives
+
+Support anonymous or verified complaint submission.
+
+Allow admins to view, update, and export complaint records.
+
+Enable users to track complaint statuses in real time.
+
+Support file uploads for evidence (images/documents).
+
+Provide statistical insights and exportable logs.
+
+🧩 Required Modules
+1. Login & Access Control
+
+Implement user authentication (Spring Security + JWT).
+
+Users can choose:
+
+Public mode: Submit complaints anonymously (no tracking).
+
+Login mode: Authenticated users can submit and track complaints.
+
+Role-based access:
+
+User: Submit and track complaints.
+
+Admin: View all complaints, update statuses, and export logs.
+
+2. Complaint Input Module
+
+Form fields:
+
+Category, Description, Urgency, Attachment (optional).
+
+Validate inputs before submission.
+
+Store complaints in MySQL database with timestamps and user info.
+
+Allow file uploads using a REST API endpoint in Spring Boot (e.g., via MultipartFile).
+
+3. Complaint Management & Tracking
+
+Display complaint list with filters (status, category, urgency).
+
+Track statuses: Pending → In Progress → Resolved.
+
+Admins can update and comment on complaint progress.
+
+4. Dashboard & Statistics (Optional)
+
+Show visual charts for:
+
+Total complaints.
+
+Resolved vs Pending.
+
+Category-wise distribution.
+
+Export logs in CSV or JSON format.
+
+⚙️ Tech Stack
+
+Frontend: React (with Axios for API calls, React Router for navigation)
+Backend: Spring Boot (RESTful APIs, Spring Security, JPA/Hibernate)
+Database: MySQL
+Build Tools: Maven (backend) & npm/yarn (frontend)
+Server Communication: JSON over REST APIs
