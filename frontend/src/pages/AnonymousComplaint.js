@@ -48,9 +48,9 @@ const AnonymousComplaint = () => {
 
   return (
     <div className="container">
-      <div className="card" style={{ maxWidth: '700px', margin: '50px auto' }}>
-        <h2>Submit Anonymous Complaint</h2>
-        <p style={{ marginBottom: '20px', color: '#666' }}>
+      <div className="card" style={{ maxWidth: '700px', margin: '50px auto',color:'black' }}>
+        <h2 style={{ color: 'white' }}>Submit Anonymous Complaint</h2>
+        <p style={{ marginBottom: '20px', color: 'white' }}>
           Note: Anonymous complaints cannot be tracked. Create an account to track your complaints.
         </p>
         <form onSubmit={handleSubmit}>
@@ -93,7 +93,7 @@ const AnonymousComplaint = () => {
           </div>
           {error && <div className="error">{error}</div>}
           {success && <div className="success">{success}</div>}
-          <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', color:'white' }}>
             Submit Anonymous Complaint
           </button>
         </form>

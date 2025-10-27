@@ -5,35 +5,47 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const storedToken = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
+
+    if (storedToken && userData) {
+      setToken(storedToken);
       setUser(JSON.parse(userData));
     }
+
     setLoading(false);
   }, []);
 
-  const login = (token, userData) => {
-    localStorage.setItem('token', token);
+  // ✅ Log token whenever it changes
+  useEffect(() => {
+    if (token) {
+      console.log('Current JWT Token:', token);
+    } 
+  }, [token]);
+
+  const login = (newToken, userData) => {
+    localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(userData));
+    setToken(newToken);
     setUser(userData);
+    console.log('JWT token stored:', newToken);
   };
 
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    setToken(null);
     setUser(null);
+    console.log('User logged out, JWT token cleared');
   };
 
-  const isAdmin = () => {
-    return user?.roles?.includes('ADMIN');
-  };
+  const isAdmin = () => user?.roles?.includes('ADMIN');
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAdmin, loading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isAdmin, loading }}>
       {children}
     </AuthContext.Provider>
   );
@@ -41,8 +53,6 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };

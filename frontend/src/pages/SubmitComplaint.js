@@ -63,10 +63,11 @@ const SubmitComplaint = () => {
             <label>Category</label>
             <select name="category" value={formData.category} onChange={handleChange} required>
               <option value="">Select Category</option>
-              <option value="Academic">Academic</option>
-              <option value="Infrastructure">Infrastructure</option>
-              <option value="Administrative">Administrative</option>
-              <option value="Harassment">Harassment</option>
+              <option value="Hardware">Hardware</option>
+              <option value="Software">Software</option>
+              <option value="Network">Network</option>
+              <option value="Security">Security</option>
+              <option value="Account">Account/Access</option>
               <option value="Other">Other</option>
             </select>
           </div>

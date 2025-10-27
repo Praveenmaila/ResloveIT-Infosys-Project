@@ -64,17 +64,7 @@ const Home = () => {
           )}
         </div>
         
-        <div style={{ marginTop: '40px', borderTop: '1px solid #ddd', paddingTop: '20px' }}>
-          <h3>Features:</h3>
-          <ul style={{ marginLeft: '20px', marginTop: '10px' }}>
-            <li>Submit complaints anonymously or with your account</li>
-            <li>Track complaint status in real-time (Pending → In Progress → Resolved)</li>
-            <li>Upload supporting documents and images</li>
-            <li>View admin comments and updates</li>
-            <li>Filter and search complaints (Admin)</li>
-            <li>Role-based access control</li>
-          </ul>
-        </div>
+      
       </div>
     </div>
   );

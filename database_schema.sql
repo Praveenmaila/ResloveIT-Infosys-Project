@@ -61,7 +61,7 @@ INSERT INTO users (username, email, password, full_name, enabled)
 VALUES ('admin', 'admin@resolveit.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'System Admin', TRUE)
 ON DUPLICATE KEY UPDATE username = username;
 
--- Assign ADMIN role to admin user
+-- Assign ADMIN role to  user
 INSERT INTO user_roles (user_id, role)
 SELECT id, 'ADMIN' FROM users WHERE username = 'admin'
 ON DUPLICATE KEY UPDATE role = role;

@@ -17,6 +17,7 @@ const Login = () => {
     try {
       const response = await authService.login(username, password);
       const { token, id, username: user, email, roles } = response.data;
+          // console.log("AuthProvider loaded with token:", token);
       login(token, { id, username: user, email, roles });
       navigate('/');
     } catch (err) {
@@ -53,7 +54,7 @@ const Login = () => {
           </button>
         </form>
         <p style={{ marginTop: '20px', textAlign: 'center' }}>
-          Don't have an account? <Link to="/signup">Sign Up</Link>
+          Don't have an account? <Link  to="/signup">Sign Up</Link>
         </p>
       </div>
     </div>
