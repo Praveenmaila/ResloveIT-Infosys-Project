@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -20,7 +19,10 @@ public class ComplaintResponse {
     private String username;
     private boolean anonymous;
     private String attachmentPath;
-    private List<String> comments;
+    private String assignedToUsername;
+    private boolean isEscalated;
+    private String escalatedToUsername;
+    private LocalDateTime escalatedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
@@ -34,7 +36,12 @@ public class ComplaintResponse {
                        (complaint.getUser() != null ? complaint.getUser().getUsername() : "Anonymous");
         this.anonymous = complaint.isAnonymous();
         this.attachmentPath = complaint.getAttachmentPath();
-        this.comments = complaint.getComments();
+        this.assignedToUsername = complaint.getAssignedTo() != null ? 
+                                complaint.getAssignedTo().getUsername() : null;
+        this.isEscalated = complaint.isEscalated();
+        this.escalatedToUsername = complaint.getEscalatedTo() != null ? 
+                                 complaint.getEscalatedTo().getUsername() : null;
+        this.escalatedAt = complaint.getEscalatedAt();
         this.createdAt = complaint.getCreatedAt();
         this.updatedAt = complaint.getUpdatedAt();
     }

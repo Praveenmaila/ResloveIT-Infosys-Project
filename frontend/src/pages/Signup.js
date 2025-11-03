@@ -27,7 +27,7 @@ const Signup = () => {
     setSuccess('');
 
     try {
-      const roles = formData.role === 'ADMIN' ? ['ADMIN'] : ['USER'];
+      const roles = [formData.role];
       await authService.signup(
         formData.username,
         formData.email,
@@ -94,6 +94,7 @@ const Signup = () => {
             <select name="role" value={formData.role} onChange={handleChange}>
               <option value="USER">User</option>
               <option value="ADMIN">Admin</option>
+              <option value="OFFICER">Officer</option>
             </select>
           </div>
           {error && <div className="error">{error}</div>}

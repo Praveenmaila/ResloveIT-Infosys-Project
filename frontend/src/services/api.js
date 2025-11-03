@@ -52,11 +52,11 @@ export const complaintService = {
   
   getComplaintById: (id) => api.get(`/complaints/admin/${id}`),
   
-  updateComplaintStatus: (id, status) => 
-    api.put(`/complaints/admin/${id}/status`, { status }),
+  updateComplaint: (id, updateRequest) => 
+    api.put(`/complaints/admin/${id}`, updateRequest),
   
-  addComment: (id, comment) => 
-    api.post(`/complaints/admin/${id}/comment`, { comment }),
+  getComplaintTimeline: (id, includeInternal = false) => 
+    api.get(`/complaints/${id}/timeline?includeInternal=${includeInternal}`),
   
   filterComplaints: (status, category, urgency) => {
     const params = new URLSearchParams();

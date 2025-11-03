@@ -31,22 +31,33 @@ public class Complaint {
     @Column(nullable = false)
     private String urgency;
     
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(50)")
     @Enumerated(EnumType.STRING)
-    private ComplaintStatus status = ComplaintStatus.PENDING;
+    private ComplaintStatus status = ComplaintStatus.NEW;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
     
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to")
+    private User assignedTo;
+    
     private boolean anonymous = false;
     
     private String attachmentPath;
     
-    @ElementCollection
-    @CollectionTable(name = "complaint_comments", joinColumns = @JoinColumn(name = "complaint_id"))
-    @Column(name = "comment", columnDefinition = "TEXT")
-    private List<String> comments = new ArrayList<>();
+    @OneToMany(mappedBy = "complaint", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ComplaintTimeline> timeline = new ArrayList<>();
+    
+    private boolean isEscalated = false;
+    
+    @Column(nullable = true)
+    private LocalDateTime escalatedAt;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "escalated_to")
+    private User escalatedTo;
     
     @CreationTimestamp
     @Column(updatable = false)
@@ -56,8 +67,21 @@ public class Complaint {
     private LocalDateTime updatedAt;
     
     public enum ComplaintStatus {
-        PENDING,
+        NEW,
+        UNDER_REVIEW,
         IN_PROGRESS,
-        RESOLVED
+        ESCALATED,
+        RESOLVED,
+        CLOSED
+    }
+    
+    public void addTimelineEntry(ComplaintStatus status, String comment, boolean isInternalNote, User updatedBy) {
+        ComplaintTimeline entry = new ComplaintTimeline();
+        entry.setComplaint(this);
+        entry.setStatus(status);
+        entry.setComment(comment);
+        entry.setInternalNote(isInternalNote);
+        entry.setUpdatedBy(updatedBy);
+        this.timeline.add(entry);
     }
 }

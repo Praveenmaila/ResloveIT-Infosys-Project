@@ -63,7 +63,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/complaints/anonymous").permitAll()
-                .requestMatchers("/api/complaints/admin/**").hasAuthority("ADMIN")
+                .requestMatchers("/api/complaints/admin/**").hasAnyAuthority("ADMIN", "OFFICER")
                 .anyRequest().authenticated()
             );
         

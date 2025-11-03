@@ -56,13 +56,19 @@ const AnonymousComplaint = () => {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Category</label>
-            <select name="category" value={formData.category} onChange={handleChange} required>
+                        <select name="category" value={formData.category} onChange={handleChange} required>
               <option value="">Select Category</option>
-              <option value="Academic">Academic</option>
-              <option value="Infrastructure">Infrastructure</option>
-              <option value="Administrative">Administrative</option>
-              <option value="Harassment">Harassment</option>
-              <option value="Other">Other</option>
+              <option value="TECHNICAL">Technical</option>
+              <option value="BILLING">Billing</option>
+              <option value="SERVICE_QUALITY">Service Quality</option>
+              <option value="DELIVERY">Delivery</option>
+              <option value="PRODUCT_QUALITY">Product Quality</option>
+              <option value="CUSTOMER_SERVICE">Customer Service</option>
+              <option value="WEBSITE">Website</option>
+              <option value="MOBILE_APP">Mobile App</option>
+              <option value="SECURITY">Security</option>
+              <option value="FEEDBACK">Feedback</option>
+              <option value="OTHER">Other</option>
             </select>
           </div>
           <div className="form-group">

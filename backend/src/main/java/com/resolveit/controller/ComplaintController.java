@@ -1,8 +1,6 @@
 package com.resolveit.controller;
 
-import com.resolveit.dto.ComplaintRequest;
-import com.resolveit.dto.ComplaintResponse;
-import com.resolveit.dto.MessageResponse;
+import com.resolveit.dto.*;
 import com.resolveit.service.ComplaintService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -97,29 +94,26 @@ public class ComplaintController {
         }
     }
     
-    @PutMapping("/admin/{id}/status")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> updateComplaintStatus(
+    @PutMapping("/admin/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OFFICER')")
+    public ResponseEntity<?> updateComplaint(
             @PathVariable Long id,
-            @RequestBody Map<String, String> statusUpdate) {
+            @Valid @RequestBody ComplaintUpdateRequest updateRequest) {
         try {
-            String status = statusUpdate.get("status");
-            ComplaintResponse complaint = complaintService.updateComplaintStatus(id, status);
+            ComplaintResponse complaint = complaintService.updateComplaint(id, updateRequest);
             return ResponseEntity.ok(complaint);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
         }
     }
     
-    @PostMapping("/admin/{id}/comment")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> addComment(
+    @GetMapping("/{id}/timeline")
+    public ResponseEntity<?> getComplaintTimeline(
             @PathVariable Long id,
-            @RequestBody Map<String, String> commentData) {
+            @RequestParam(defaultValue = "false") boolean includeInternal) {
         try {
-            String comment = commentData.get("comment");
-            ComplaintResponse complaint = complaintService.addComment(id, comment);
-            return ResponseEntity.ok(complaint);
+            List<ComplaintTimelineResponse> timeline = complaintService.getComplaintTimeline(id, includeInternal);
+            return ResponseEntity.ok(timeline);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
         }
