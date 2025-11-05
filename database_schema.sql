@@ -33,17 +33,25 @@ CREATE TABLE IF NOT EXISTS complaints (
     category VARCHAR(50) NOT NULL,
     description TEXT NOT NULL,
     urgency VARCHAR(20) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    status VARCHAR(50) NOT NULL DEFAULT 'NEW',
     user_id BIGINT,
+    assigned_to BIGINT,
+    deadline TIMESTAMP NULL,
     anonymous BOOLEAN DEFAULT FALSE,
     attachment_path VARCHAR(255),
+    is_escalated BOOLEAN DEFAULT FALSE,
+    escalated_at TIMESTAMP NULL,
+    escalated_to BIGINT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (escalated_to) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_status (status),
     INDEX idx_category (category),
     INDEX idx_urgency (urgency),
     INDEX idx_user_id (user_id),
+    INDEX idx_assigned_to (assigned_to),
     INDEX idx_created_at (created_at)
 );
 
@@ -53,6 +61,22 @@ CREATE TABLE IF NOT EXISTS complaint_comments (
     comment TEXT NOT NULL,
     FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE,
     INDEX idx_complaint_id (complaint_id)
+);
+
+-- Complaint timeline table
+CREATE TABLE IF NOT EXISTS complaint_timeline (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    complaint_id BIGINT NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    comment TEXT,
+    is_internal_note BOOLEAN DEFAULT FALSE,
+    updated_by BIGINT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_complaint_id (complaint_id),
+    INDEX idx_status (status),
+    INDEX idx_timestamp (timestamp)
 );
 
 -- Insert sample admin user

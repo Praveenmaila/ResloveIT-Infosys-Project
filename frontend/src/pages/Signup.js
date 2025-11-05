@@ -45,7 +45,7 @@ const Signup = () => {
   return (
     <div className="container">
       <div className="card" style={{ maxWidth: '500px', margin: '50px auto' }}>
-        <h2 style={{ color: 'white' }}>Sign Up</h2>
+        <h2 style={{  }}>Sign Up</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Username</label>

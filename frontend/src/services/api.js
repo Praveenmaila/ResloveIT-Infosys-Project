@@ -31,14 +31,15 @@ export const authService = {
 };
 
 export const complaintService = {
+  // Complaint submission
   createAnonymousComplaint: (formData) => 
-    axios.post(`${API_URL}/complaints/anonymous`, formData, {
+    axios.post(`${API_URL}/complaints/submit/anonymous`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }),
   
   createComplaint: (formData) => {
     const token = localStorage.getItem('token');
-    return axios.post(`${API_URL}/complaints`, formData, {
+    return axios.post(`${API_URL}/complaints/submit`, formData, {
       headers: { 
         'Content-Type': 'multipart/form-data',
         'Authorization': `Bearer ${token}`
@@ -46,14 +47,38 @@ export const complaintService = {
     });
   },
   
+  // Complaint management
+  assignComplaint: (id, assignRequest) => 
+    api.put(`/complaints/assign/${id}`, assignRequest),
+  
+  unassignComplaint: (id) => 
+    api.put(`/complaints/unassign/${id}`),
+  
+  updateDeadline: (id, deadlineRequest) => 
+    api.put(`/complaints/deadline/${id}`, deadlineRequest),
+  
+  markCompleted: (id) => 
+    api.put(`/complaints/complete/${id}`),
+  
+  markResolved: (id) => 
+    api.put(`/complaints/resolve/${id}`),
+  
+  editComplaint: (id, updateRequest) => 
+    api.put(`/complaints/edit/${id}`, updateRequest),
+  
+  updateComplaintStatus: (id, status) => 
+    api.put(`/complaints/status/${id}`, { status }),
+  
+  // Information retrieval
   getMyComplaints: () => api.get('/complaints/my'),
+  
+  getAssignedComplaints: () => api.get('/complaints/assigned'),
   
   getAllComplaints: () => api.get('/complaints/admin/all'),
   
-  getComplaintById: (id) => api.get(`/complaints/admin/${id}`),
+  getPublicComplaints: () => api.get('/complaints/public'),
   
-  updateComplaint: (id, updateRequest) => 
-    api.put(`/complaints/admin/${id}`, updateRequest),
+  getComplaintById: (id) => api.get(`/complaints/${id}`),
   
   getComplaintTimeline: (id, includeInternal = false) => 
     api.get(`/complaints/${id}/timeline?includeInternal=${includeInternal}`),
@@ -63,8 +88,18 @@ export const complaintService = {
     if (status) params.append('status', status);
     if (category) params.append('category', category);
     if (urgency) params.append('urgency', urgency);
-    return api.get(`/complaints/admin/filter?${params.toString()}`);
+    return api.get(`/complaints/filter?${params.toString()}`);
   },
+  
+  // Internal notes
+  addInternalNote: (id, noteRequest) => 
+    api.post(`/complaints/notes/${id}`, noteRequest),
+  
+  getInternalNotes: (id) => 
+    api.get(`/complaints/notes/${id}`),
+  
+  // Officers management
+  getAllOfficers: () => api.get('/complaints/officers'),
 };
 
 export default api;

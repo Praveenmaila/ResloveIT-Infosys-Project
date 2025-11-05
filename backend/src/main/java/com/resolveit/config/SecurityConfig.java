@@ -62,8 +62,9 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/complaints/anonymous").permitAll()
-                .requestMatchers("/api/complaints/admin/**").hasAnyAuthority("ADMIN", "OFFICER")
+                .requestMatchers("/api/complaints/submit/anonymous").permitAll()
+                .requestMatchers("/api/complaints/public").permitAll()
+                .requestMatchers("/api/complaints/{id}/timeline").permitAll()
                 .anyRequest().authenticated()
             );
         

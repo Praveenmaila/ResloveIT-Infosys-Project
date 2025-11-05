@@ -20,6 +20,7 @@ public class ComplaintResponse {
     private boolean anonymous;
     private String attachmentPath;
     private String assignedToUsername;
+    private LocalDateTime deadline;
     private boolean isEscalated;
     private String escalatedToUsername;
     private LocalDateTime escalatedAt;
@@ -38,6 +39,7 @@ public class ComplaintResponse {
         this.attachmentPath = complaint.getAttachmentPath();
         this.assignedToUsername = complaint.getAssignedTo() != null ? 
                                 complaint.getAssignedTo().getUsername() : null;
+        this.deadline = complaint.getDeadline();
         this.isEscalated = complaint.isEscalated();
         this.escalatedToUsername = complaint.getEscalatedTo() != null ? 
                                  complaint.getEscalatedTo().getUsername() : null;

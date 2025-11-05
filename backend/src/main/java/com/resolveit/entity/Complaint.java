@@ -43,6 +43,8 @@ public class Complaint {
     @JoinColumn(name = "assigned_to")
     private User assignedTo;
     
+    private LocalDateTime deadline;
+    
     private boolean anonymous = false;
     
     private String attachmentPath;
@@ -70,6 +72,8 @@ public class Complaint {
         NEW,
         UNDER_REVIEW,
         IN_PROGRESS,
+        ASSIGNED,
+        COMPLETED,
         ESCALATED,
         RESOLVED,
         CLOSED

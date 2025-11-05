@@ -9,9 +9,10 @@ import AnonymousComplaint from './pages/AnonymousComplaint';
 import SubmitComplaint from './pages/SubmitComplaint';
 import MyComplaints from './pages/MyComplaints';
 import AdminDashboard from './pages/AdminDashboard';
+import OfficerDashboard from './pages/OfficerDashboard';
 
-const PrivateRoute = ({ children, adminOnly = false }) => {
-  const { user, isAdmin, loading } = useAuth();
+const PrivateRoute = ({ children, adminOnly = false, officerOnly = false }) => {
+  const { user, isAdmin, isOfficer, loading } = useAuth();
   
   if (loading) return <div>Loading...</div>;
   
@@ -20,6 +21,10 @@ const PrivateRoute = ({ children, adminOnly = false }) => {
   }
   
   if (adminOnly && !isAdmin()) {
+    return <Navigate to="/" />;
+  }
+  
+  if (officerOnly && !isOfficer()) {
     return <Navigate to="/" />;
   }
   
@@ -57,6 +62,14 @@ function App() {
             element={
               <PrivateRoute adminOnly={true}>
                 <AdminDashboard />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/officer/dashboard" 
+            element={
+              <PrivateRoute officerOnly={true}>
+                <OfficerDashboard />
               </PrivateRoute>
             } 
           />

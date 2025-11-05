@@ -23,7 +23,7 @@ public class ComplaintTimeline {
     @JoinColumn(name = "complaint_id", nullable = false)
     private Complaint complaint;
     
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
     private Complaint.ComplaintStatus status;
     
