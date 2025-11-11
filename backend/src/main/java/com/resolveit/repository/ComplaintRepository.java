@@ -13,4 +13,5 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> findByStatus(Complaint.ComplaintStatus status);
     List<Complaint> findByCategory(String category);
     List<Complaint> findByUrgency(String urgency);
+    List<Complaint> findByIsEscalated(boolean isEscalated);
 }

@@ -311,6 +311,80 @@ public class ComplaintController {
     }
     
     /**
+     * Escalate Complaint - ADMIN only
+     */
+    @PostMapping("/escalate/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> escalateComplaint(
+            @PathVariable Long id,
+            @Valid @RequestBody EscalationRequest escalationRequest) {
+        try {
+            ComplaintResponse complaint = complaintService.escalateComplaint(id, escalationRequest);
+            return ResponseEntity.ok(complaint);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * De-escalate Complaint - ADMIN only
+     */
+    @PutMapping("/de-escalate/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> deEscalateComplaint(
+            @PathVariable Long id,
+            @RequestParam(required = false) String comment) {
+        try {
+            ComplaintResponse complaint = complaintService.deEscalateComplaint(id, comment);
+            return ResponseEntity.ok(complaint);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Get Escalated Complaints - ADMIN only
+     */
+    @GetMapping("/admin/escalated")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> getEscalatedComplaints() {
+        try {
+            List<ComplaintResponse> complaints = complaintService.getEscalatedComplaints();
+            return ResponseEntity.ok(complaints);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Get Unresolved Complaints (escalation candidates) - ADMIN only
+     */
+    @GetMapping("/admin/unresolved")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> getUnresolvedComplaints() {
+        try {
+            List<ComplaintResponse> complaints = complaintService.getUnresolvedComplaints();
+            return ResponseEntity.ok(complaints);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Get all officers and admins for escalation - ADMIN only
+     */
+    @GetMapping("/officers-and-admins")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> getAllOfficersAndAdmins() {
+        try {
+            List<UserResponse> users = complaintService.getAllOfficersAndAdmins();
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
+        }
+    }
+
+    /**
      * Get all officers for assignment - ADMIN only
      */
     @GetMapping("/officers")

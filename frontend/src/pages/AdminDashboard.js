@@ -8,24 +8,42 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const AdminDashboard = () => {
   const [complaints, setComplaints] = useState([]);
+  const [escalatedComplaints, setEscalatedComplaints] = useState([]);
+  const [unresolvedComplaints, setUnresolvedComplaints] = useState([]);
+  const [activeTab, setActiveTab] = useState('all'); // all, escalated, unresolved
   const [filters, setFilters] = useState({ status: '', category: '', urgency: '' });
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [comment, setComment] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [officers, setOfficers] = useState([]);
+  const [officersAndAdmins, setOfficersAndAdmins] = useState([]);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showEscalateModal, setShowEscalateModal] = useState(false);
   const [assignmentData, setAssignmentData] = useState({
     complaintId: null,
     officerId: '',
     deadline: '',
     comment: ''
   });
+  const [escalationData, setEscalationData] = useState({
+    complaintId: null,
+    escalateToUserId: '',
+    reason: '',
+    priority: 'HIGH',
+    comment: ''
+  });
 
   useEffect(() => {
     fetchComplaints();
     fetchOfficers();
-  }, []);
+    fetchOfficersAndAdmins();
+    if (activeTab === 'escalated') {
+      fetchEscalatedComplaints();
+    } else if (activeTab === 'unresolved') {
+      fetchUnresolvedComplaints();
+    }
+  }, [activeTab]);
 
   const fetchComplaints = async () => {
     try {
@@ -37,12 +55,42 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchEscalatedComplaints = async () => {
+    try {
+      const res = await complaintService.getEscalatedComplaints();
+      setEscalatedComplaints(res.data || []);
+    } catch (err) {
+      setError('Failed to fetch escalated complaints');
+      console.error(err);
+    }
+  };
+
+  const fetchUnresolvedComplaints = async () => {
+    try {
+      const res = await complaintService.getUnresolvedComplaints();
+      setUnresolvedComplaints(res.data || []);
+    } catch (err) {
+      setError('Failed to fetch unresolved complaints');
+      console.error(err);
+    }
+  };
+
   const fetchOfficers = async () => {
     try {
       const res = await complaintService.getAllOfficers();
       setOfficers(res.data || []);
     } catch (err) {
       setError('Failed to fetch officers');
+      console.error(err);
+    }
+  };
+
+  const fetchOfficersAndAdmins = async () => {
+    try {
+      const res = await complaintService.getAllOfficersAndAdmins();
+      setOfficersAndAdmins(res.data || []);
+    } catch (err) {
+      setError('Failed to fetch officers and admins');
       console.error(err);
     }
   };
@@ -264,9 +312,159 @@ const AdminDashboard = () => {
     }
   };
 
+  // Escalation Functions
+  const openEscalateModal = (complaintId) => {
+    console.log('Opening escalate modal for complaint:', complaintId);
+    setEscalationData({
+      complaintId: complaintId,
+      escalateToUserId: '',
+      reason: '',
+      priority: 'HIGH',
+      comment: ''
+    });
+    setError('');
+    setSuccess('');
+    setShowEscalateModal(true);
+  };
+
+  const escalateComplaint = async () => {
+    console.log('=== Escalation Process Started ===');
+    console.log('Current escalationData:', escalationData);
+    
+    if (!escalationData.reason.trim()) {
+      setError('Please provide a reason for escalation');
+      return;
+    }
+
+    if (!escalationData.complaintId) {
+      setError('No complaint selected for escalation');
+      return;
+    }
+
+    try {
+      setError('');
+      setSuccess('');
+      
+      const escalationRequest = {
+        escalateToUserId: escalationData.escalateToUserId || null,
+        reason: escalationData.reason,
+        priority: escalationData.priority,
+        comment: escalationData.comment || '',
+        notifyImmediately: true
+      };
+
+      console.log('📤 Sending escalation request:', escalationRequest);
+      console.log('📋 Complaint ID:', escalationData.complaintId);
+
+      const response = await complaintService.escalateComplaint(escalationData.complaintId, escalationRequest);
+      console.log('✅ Escalation successful, response:', response);
+      
+      setSuccess('Complaint escalated successfully!');
+      setTimeout(() => {
+        setSuccess('');
+        setShowEscalateModal(false);
+        setEscalationData({
+          complaintId: null,
+          escalateToUserId: '',
+          reason: '',
+          priority: 'HIGH',
+          comment: ''
+        });
+      }, 2000);
+      
+      fetchComplaints();
+      fetchEscalatedComplaints();
+      
+      // Update the selected complaint if it's the one being escalated
+      if (selectedComplaint && selectedComplaint.id === escalationData.complaintId) {
+        setSelectedComplaint(prev => ({
+          ...prev, 
+          status: 'ESCALATED',
+          isEscalated: true,
+          escalatedAt: new Date().toISOString()
+        }));
+      }
+    } catch (err) {
+      console.error('❌ Escalation Failed:', err);
+      console.error('❌ Error Response Data:', err.response?.data);
+      
+      let errorMessage = 'Failed to escalate complaint';
+      if (err.response?.data?.message) {
+        errorMessage += ': ' + err.response.data.message;
+      } else if (err.response?.status === 403) {
+        errorMessage += ': Access denied. Admin privileges required.';
+      } else if (err.response?.status === 404) {
+        errorMessage += ': Complaint not found.';
+      } else if (err.message) {
+        errorMessage += ': ' + err.message;
+      }
+      
+      setError(errorMessage);
+    }
+  };
+
+  const deEscalateComplaint = async (id, comment) => {
+    try {
+      await complaintService.deEscalateComplaint(id, comment);
+      setSuccess('Complaint de-escalated successfully');
+      setTimeout(() => setSuccess(''), 3000);
+      fetchComplaints();
+      fetchEscalatedComplaints();
+      
+      if (selectedComplaint && selectedComplaint.id === id) {
+        setSelectedComplaint(prev => ({
+          ...prev, 
+          status: prev.assignedToUsername ? 'ASSIGNED' : 'UNDER_REVIEW',
+          isEscalated: false,
+          escalatedAt: null,
+          escalatedToUsername: null
+        }));
+      }
+    } catch (err) {
+      setError('Failed to de-escalate complaint');
+      console.error(err);
+    }
+  };
+
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const getCurrentComplaints = () => {
+    switch (activeTab) {
+      case 'escalated':
+        return escalatedComplaints;
+      case 'unresolved':
+        return unresolvedComplaints;
+      case 'all':
+      default:
+        return complaints;
+    }
+  };
+
+  const getTabTitle = () => {
+    switch (activeTab) {
+      case 'escalated':
+        return `Escalated Complaints (${escalatedComplaints.length})`;
+      case 'unresolved':
+        return `Unresolved Complaints (${unresolvedComplaints.length})`;
+      case 'all':
+      default:
+        return `All Complaints (${complaints.length})`;
+    }
+  };
+
+  const getTabDescription = () => {
+    switch (activeTab) {
+      case 'escalated':
+        return 'These are complaints that have been escalated to higher authorities due to severity, delays, or special handling requirements.';
+      case 'unresolved':
+        return 'These are complaints that may need escalation due to being overdue, stuck in progress, or unassigned for too long.';
+      case 'all':
+      default:
+        return 'Complete overview of all complaints in the system.';
+    }
   };
 
   const getStatusClass = (status) => {
@@ -324,12 +522,77 @@ const AdminDashboard = () => {
 
   const { categoryChartData, statusChartData } = getChartData();
 
+  const currentComplaints = getCurrentComplaints();
+
   return (
     <div className="container">
       <h2>Admin Dashboard</h2>
 
       {error && <div className="error">{error}</div>}
       {success && <div className="success">{success}</div>}
+
+      {/* Navigation Tabs */}
+      <div className="card">
+        <div className="tab-navigation" style={{ 
+          display: 'flex', 
+          borderBottom: '2px solid #e0e0e0',
+          marginBottom: '20px'
+        }}>
+          <button
+            className={`tab-button ${activeTab === 'all' ? 'active' : ''}`}
+            onClick={() => setActiveTab('all')}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              backgroundColor: activeTab === 'all' ? '#007bff' : 'transparent',
+              color: activeTab === 'all' ? 'white' : '#333',
+              borderRadius: '8px 8px 0 0',
+              cursor: 'pointer',
+              fontWeight: activeTab === 'all' ? 'bold' : 'normal',
+              marginRight: '5px'
+            }}
+          >
+            📊 All Complaints ({complaints.length})
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'escalated' ? 'active' : ''}`}
+            onClick={() => setActiveTab('escalated')}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              backgroundColor: activeTab === 'escalated' ? '#dc3545' : 'transparent',
+              color: activeTab === 'escalated' ? 'white' : '#333',
+              borderRadius: '8px 8px 0 0',
+              cursor: 'pointer',
+              fontWeight: activeTab === 'escalated' ? 'bold' : 'normal',
+              marginRight: '5px'
+            }}
+          >
+            🔺 Escalated ({escalatedComplaints.length})
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'unresolved' ? 'active' : ''}`}
+            onClick={() => setActiveTab('unresolved')}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              backgroundColor: activeTab === 'unresolved' ? '#ffc107' : 'transparent',
+              color: activeTab === 'unresolved' ? 'black' : '#333',
+              borderRadius: '8px 8px 0 0',
+              cursor: 'pointer',
+              fontWeight: activeTab === 'unresolved' ? 'bold' : 'normal'
+            }}
+          >
+            ⚠️ Need Attention ({unresolvedComplaints.length})
+          </button>
+        </div>
+        
+        <div style={{ padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '8px', marginBottom: '20px' }}>
+          <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
+            <strong>{getTabTitle()}</strong> - {getTabDescription()}
+          </p>
+        </div>
+      </div>
 
       <div className="card">
         <h3>Filters</h3>
@@ -417,9 +680,9 @@ const AdminDashboard = () => {
       </div>
 
       <div className="card">
-        <h3>All Complaints ({complaints.length})</h3>
+        <h3>{getTabTitle()}</h3>
         <div className="complaint-stats" style={{ marginBottom: 20, display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-          {Object.entries(complaints.reduce((acc, complaint) => {
+          {Object.entries(currentComplaints.reduce((acc, complaint) => {
             acc[complaint.status] = (acc[complaint.status] || 0) + 1;
             return acc;
           }, {})).map(([status, count]) => (
@@ -440,15 +703,24 @@ const AdminDashboard = () => {
                 <th>Urgency</th>
                 <th>Status</th>
                 <th>Assigned To</th>
+                {activeTab === 'escalated' && <th>Escalated To</th>}
                 <th>Deadline</th>
                 <th>Date</th>
+                {activeTab === 'escalated' && <th>Escalated Date</th>}
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {complaints.map((c) => (
-                <tr key={c.id}>
-                  <td>{c.id}</td>
+              {currentComplaints.map((c) => (
+                <tr key={c.id} style={{
+                  backgroundColor: c.isEscalated ? '#fff3cd' : 
+                    (c.deadline && new Date(c.deadline) < new Date() && 
+                     c.status !== 'RESOLVED' && c.status !== 'CLOSED') ? '#f8d7da' : 'transparent'
+                }}>
+                  <td>
+                    {c.id}
+                    {c.isEscalated && <span style={{ marginLeft: '5px', color: '#dc3545', fontSize: '12px' }}>🔺</span>}
+                  </td>
                   <td>{c.username}</td>
                   <td>{c.category}</td>
                   <td style={{ maxWidth: 200 }}>{(c.description || '').substring(0, 50)}{(c.description || '').length > 50 ? '...' : ''}</td>
@@ -467,6 +739,17 @@ const AdminDashboard = () => {
                       <span style={{ color: '#666', fontStyle: 'italic' }}>Unassigned</span>
                     )}
                   </td>
+                  {activeTab === 'escalated' && (
+                    <td>
+                      {c.escalatedToUsername ? (
+                        <span style={{ color: '#dc3545', fontWeight: 'bold' }}>
+                          {c.escalatedToUsername}
+                        </span>
+                      ) : (
+                        <span style={{ color: '#dc3545', fontStyle: 'italic' }}>General Escalation</span>
+                      )}
+                    </td>
+                  )}
                   <td>
                     {c.deadline ? (
                       <span style={{ 
@@ -474,12 +757,23 @@ const AdminDashboard = () => {
                         fontWeight: new Date(c.deadline) < new Date() ? 'bold' : 'normal'
                       }}>
                         {new Date(c.deadline).toLocaleDateString()}
+                        {new Date(c.deadline) < new Date() && 
+                          <span style={{ marginLeft: '5px', color: '#d32f2f' }}>⏰</span>}
                       </span>
                     ) : (
                       <span style={{ color: '#666' }}>-</span>
                     )}
                   </td>
                   <td>{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-'}</td>
+                  {activeTab === 'escalated' && (
+                    <td>
+                      {c.escalatedAt ? (
+                        <span style={{ color: '#dc3545', fontSize: '12px' }}>
+                          {new Date(c.escalatedAt).toLocaleDateString()}
+                        </span>
+                      ) : '-'}
+                    </td>
+                  )}
                   <td>
                     <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                       <button 
@@ -489,6 +783,15 @@ const AdminDashboard = () => {
                       >
                         View
                       </button>
+                      {activeTab === 'unresolved' && !c.isEscalated && (
+                        <button 
+                          onClick={() => openEscalateModal(c.id)} 
+                          className="btn" 
+                          style={{ fontSize: 12, padding: '5px 10px', backgroundColor: '#dc3545', color: 'white' }}
+                        >
+                          🔺 Escalate
+                        </button>
+                      )}
                       {!c.assignedToUsername && c.status !== 'RESOLVED' && c.status !== 'CLOSED' && (
                         <button 
                           onClick={() => openAssignModal(c.id)} 
@@ -555,6 +858,35 @@ const AdminDashboard = () => {
                   </span>
                 </p>
               )}
+
+              {/* Escalation Information */}
+              {selectedComplaint.isEscalated && (
+                <div style={{ 
+                  backgroundColor: '#fff3cd', 
+                  padding: '10px', 
+                  borderRadius: '5px', 
+                  border: '1px solid #ffeaa7',
+                  margin: '10px 0'
+                }}>
+                  <p style={{ margin: '0 0 5px 0', color: '#856404', fontWeight: 'bold' }}>
+                    🔺 <strong>ESCALATED COMPLAINT</strong>
+                  </p>
+                  {selectedComplaint.escalatedToUsername && (
+                    <p style={{ margin: '0 0 5px 0' }}><strong>Escalated To:</strong> 
+                      <span style={{ color: '#dc3545', fontWeight: 'bold', marginLeft: 5 }}>
+                        {selectedComplaint.escalatedToUsername}
+                      </span>
+                    </p>
+                  )}
+                  {selectedComplaint.escalatedAt && (
+                    <p style={{ margin: '0' }}><strong>Escalated On:</strong> 
+                      <span style={{ marginLeft: 5 }}>
+                        {new Date(selectedComplaint.escalatedAt).toLocaleString()}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
               
               <p><strong>Created:</strong> {selectedComplaint.createdAt ? new Date(selectedComplaint.createdAt).toLocaleString() : '-'}</p>
               <p><strong>Description:</strong></p>
@@ -608,6 +940,26 @@ const AdminDashboard = () => {
                 flexWrap: 'wrap', 
                 alignItems: 'center'
               }}>
+                {/* Escalation Actions */}
+                {!selectedComplaint.isEscalated && selectedComplaint.status !== 'RESOLVED' && selectedComplaint.status !== 'CLOSED' && (
+                  <button 
+                    onClick={() => openEscalateModal(selectedComplaint.id)} 
+                    className="btn btn-danger btn-sm"
+                  >
+                    � Escalate
+                  </button>
+                )}
+                
+                {selectedComplaint.isEscalated && (
+                  <button 
+                    onClick={() => deEscalateComplaint(selectedComplaint.id, 'Resolved by admin')} 
+                    className="btn btn-warning btn-sm"
+                  >
+                    � De-escalate
+                  </button>
+                )}
+                
+                {/* Assignment Actions */}
                 {!selectedComplaint.assignedToUsername && selectedComplaint.status !== 'RESOLVED' && selectedComplaint.status !== 'CLOSED' && (
                   <button 
                     onClick={() => openAssignModal(selectedComplaint.id)} 
@@ -626,12 +978,31 @@ const AdminDashboard = () => {
                   </button>
                 )}
                 
+                {/* Status Actions */}
                 {selectedComplaint.status === 'COMPLETED' && (
                   <button 
                     onClick={() => markResolved(selectedComplaint.id)} 
                     className="btn btn-success btn-sm"
                   >
                     ✅ Mark as Resolved
+                  </button>
+                )}
+                
+                {!selectedComplaint.isEscalated && selectedComplaint.status !== 'RESOLVED' && selectedComplaint.status !== 'CLOSED' && (
+                  <button 
+                    onClick={() => openEscalateModal(selectedComplaint.id)} 
+                    className="btn btn-danger btn-sm"
+                  >
+                    🔺 Escalate Complaint
+                  </button>
+                )}
+                
+                {selectedComplaint.isEscalated && (
+                  <button 
+                    onClick={() => deEscalateComplaint(selectedComplaint.id, 'De-escalated by admin')} 
+                    className="btn btn-warning btn-sm"
+                  >
+                    🔻 De-escalate
                   </button>
                 )}
                 
@@ -648,13 +1019,6 @@ const AdminDashboard = () => {
                   disabled={selectedComplaint.status === 'IN_PROGRESS'}
                 >
                   ⚙️ In Progress
-                </button>
-                <button 
-                  onClick={() => updateStatus(selectedComplaint.id, 'ESCALATED')} 
-                  className="btn btn-danger btn-sm"
-                  disabled={selectedComplaint.status === 'ESCALATED'}
-                >
-                  🔺 Escalate
                 </button>
                 <button 
                   onClick={() => updateStatus(selectedComplaint.id, 'CLOSED')} 
@@ -780,6 +1144,144 @@ const AdminDashboard = () => {
                 disabled={!assignmentData.officerId}
               >
                 Assign Complaint
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Escalation Modal */}
+      {showEscalateModal && (
+        <div className="modal" style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+        }}>
+          <div className="card modal-content" style={{ maxWidth: 500, margin: 20 }}>
+            <h3>🔺 Escalate Complaint</h3>
+            
+            {error && (
+              <div style={{ 
+                backgroundColor: '#ffebee', 
+                color: '#c62828', 
+                padding: 10, 
+                borderRadius: 4, 
+                marginBottom: 15, 
+                border: '1px solid #ef5350' 
+              }}>
+                {error}
+              </div>
+            )}
+            
+            {success && (
+              <div style={{ 
+                backgroundColor: '#e8f5e8', 
+                color: '#2e7d32', 
+                padding: 10, 
+                borderRadius: 4, 
+                marginBottom: 15, 
+                border: '1px solid #4caf50' 
+              }}>
+                {success}
+              </div>
+            )}
+            
+            <div className="form-group" style={{ marginBottom: 15 }}>
+              <label><strong>Escalation Reason: <span style={{color: 'red'}}>*</span></strong></label>
+              <select 
+                value={escalationData.reason} 
+                onChange={(e) => setEscalationData(prev => ({ ...prev, reason: e.target.value }))}
+                style={{ width: '100%', padding: 10, marginTop: 5, border: '1px solid #ccc', borderRadius: 4 }}
+              >
+                <option value="">Select escalation reason...</option>
+                <option value="Overdue Deadline">Overdue Deadline - Past deadline without resolution</option>
+                <option value="High Priority">High Priority - Requires immediate attention</option>
+                <option value="Complex Issue">Complex Issue - Needs senior expertise</option>
+                <option value="Customer Escalation">Customer Escalation - Escalated by customer</option>
+                <option value="Unresponsive Officer">Unresponsive Officer - No progress updates</option>
+                <option value="Resource Constraints">Resource Constraints - Needs additional resources</option>
+                <option value="Policy Decision">Policy Decision - Requires management decision</option>
+                <option value="Legal/Compliance">Legal/Compliance - Legal or compliance issue</option>
+                <option value="Other">Other - See additional comments</option>
+              </select>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: 15 }}>
+              <label><strong>Priority Level:</strong></label>
+              <select 
+                value={escalationData.priority} 
+                onChange={(e) => setEscalationData(prev => ({ ...prev, priority: e.target.value }))}
+                style={{ width: '100%', padding: 10, marginTop: 5, border: '1px solid #ccc', borderRadius: 4 }}
+              >
+                <option value="HIGH">🟡 HIGH - Standard escalation</option>
+                <option value="URGENT">🟠 URGENT - Requires quick action</option>
+                <option value="CRITICAL">🔴 CRITICAL - Immediate attention required</option>
+              </select>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: 15 }}>
+              <label><strong>Escalate To (Optional):</strong></label>
+              <select 
+                value={escalationData.escalateToUserId} 
+                onChange={(e) => setEscalationData(prev => ({ ...prev, escalateToUserId: e.target.value }))}
+                style={{ width: '100%', padding: 10, marginTop: 5, border: '1px solid #ccc', borderRadius: 4 }}
+              >
+                <option value="">General escalation (no specific user)</option>
+                {officersAndAdmins.map(user => (
+                  <option key={user.id} value={user.id}>
+                    {user.fullName} ({user.email}) - {user.roles || 'Officer/Admin'}
+                  </option>
+                ))}
+              </select>
+              <small style={{ color: '#666', fontSize: '12px', marginTop: '5px', display: 'block' }}>
+                Leave blank for general escalation, or select a specific admin/officer to handle this escalation.
+              </small>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: 15 }}>
+              <label><strong>Additional Comments:</strong></label>
+              <textarea
+                value={escalationData.comment}
+                onChange={(e) => setEscalationData(prev => ({ ...prev, comment: e.target.value }))}
+                placeholder="Provide additional context about why this complaint needs escalation..."
+                style={{ width: '100%', minHeight: 80, padding: 10, marginTop: 5, border: '1px solid #ccc', borderRadius: 4 }}
+              />
+            </div>
+
+            <div style={{ 
+              backgroundColor: '#fff3cd', 
+              padding: '10px', 
+              borderRadius: '4px', 
+              marginBottom: '15px',
+              border: '1px solid #ffeaa7'
+            }}>
+              <p style={{ margin: 0, fontSize: '14px', color: '#856404' }}>
+                <strong>⚠️ Note:</strong> Escalating this complaint will mark it as "ESCALATED" status and notify relevant stakeholders. 
+                This action will be recorded in the complaint timeline.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button 
+                onClick={() => setShowEscalateModal(false)} 
+                className="btn" 
+                style={{ backgroundColor: '#6c757d', color: 'white' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  console.log('Escalate button clicked');
+                  console.log('Current escalation data:', escalationData);
+                  escalateComplaint();
+                }} 
+                className="btn btn-danger"
+                disabled={!escalationData.reason}
+                style={{
+                  backgroundColor: !escalationData.reason ? '#ccc' : '#dc3545',
+                  cursor: !escalationData.reason ? 'not-allowed' : 'pointer'
+                }}
+              >
+                🔺 Escalate Complaint
               </button>
             </div>
           </div>

@@ -100,6 +100,21 @@ export const complaintService = {
   
   // Officers management
   getAllOfficers: () => api.get('/complaints/officers'),
+  
+  getAllOfficersAndAdmins: () => api.get('/complaints/officers-and-admins'),
+  
+  // Escalation management
+  escalateComplaint: (id, escalationRequest) => 
+    api.post(`/complaints/escalate/${id}`, escalationRequest),
+  
+  deEscalateComplaint: (id, comment) => {
+    const params = comment ? `?comment=${encodeURIComponent(comment)}` : '';
+    return api.put(`/complaints/de-escalate/${id}${params}`);
+  },
+  
+  getEscalatedComplaints: () => api.get('/complaints/admin/escalated'),
+  
+  getUnresolvedComplaints: () => api.get('/complaints/admin/unresolved'),
 };
 
 export default api;

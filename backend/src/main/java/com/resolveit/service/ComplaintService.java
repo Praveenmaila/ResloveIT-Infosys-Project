@@ -424,6 +424,155 @@ public class ComplaintService {
     }
     
     /**
+     * Escalate complaint - ADMIN only
+     */
+    public ComplaintResponse escalateComplaint(Long id, EscalationRequest escalationRequest) {
+        Complaint complaint = complaintRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+        
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        User currentUser = userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Find the user to escalate to (should be ADMIN or higher authority)
+        User escalateToUser = null;
+        if (escalationRequest.getEscalateToUserId() != null) {
+            escalateToUser = userRepository.findById(escalationRequest.getEscalateToUserId())
+                    .orElseThrow(() -> new RuntimeException("Escalation target user not found"));
+        }
+        
+        // Set escalation fields
+        complaint.setEscalated(true);
+        complaint.setEscalatedAt(LocalDateTime.now());
+        complaint.setEscalatedTo(escalateToUser);
+        complaint.setStatus(Complaint.ComplaintStatus.ESCALATED);
+        
+        // Build escalation comment
+        String escalationComment = String.format(
+            "Complaint escalated by %s. Reason: %s. Priority: %s", 
+            currentUser.getFullName(),
+            escalationRequest.getReason() != null ? escalationRequest.getReason() : "Not specified",
+            escalationRequest.getPriority() != null ? escalationRequest.getPriority() : "NORMAL"
+        );
+        
+        if (escalationRequest.getComment() != null && !escalationRequest.getComment().trim().isEmpty()) {
+            escalationComment += ". Additional notes: " + escalationRequest.getComment().trim();
+        }
+        
+        if (escalateToUser != null) {
+            escalationComment += " (Escalated to: " + escalateToUser.getFullName() + ")";
+        }
+        
+        complaint.addTimelineEntry(Complaint.ComplaintStatus.ESCALATED, escalationComment, false, currentUser);
+        
+        Complaint updatedComplaint = complaintRepository.save(complaint);
+        return new ComplaintResponse(updatedComplaint);
+    }
+    
+    /**
+     * Get escalated complaints - ADMIN only
+     */
+    public List<ComplaintResponse> getEscalatedComplaints() {
+        return complaintRepository.findByIsEscalated(true).stream()
+                .sorted((c1, c2) -> {
+                    // Sort by escalation date - most recent first
+                    if (c1.getEscalatedAt() == null && c2.getEscalatedAt() == null) return 0;
+                    if (c1.getEscalatedAt() == null) return 1;
+                    if (c2.getEscalatedAt() == null) return -1;
+                    return c2.getEscalatedAt().compareTo(c1.getEscalatedAt());
+                })
+                .map(ComplaintResponse::new)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Get unresolved complaints (candidates for escalation) - ADMIN only
+     */
+    public List<ComplaintResponse> getUnresolvedComplaints() {
+        return complaintRepository.findAll().stream()
+                .filter(complaint -> {
+                    // Candidates for escalation: assigned but overdue, or stuck in progress
+                    boolean isOverdue = complaint.getDeadline() != null && 
+                                      complaint.getDeadline().isBefore(LocalDateTime.now()) &&
+                                      (complaint.getStatus() == Complaint.ComplaintStatus.ASSIGNED ||
+                                       complaint.getStatus() == Complaint.ComplaintStatus.IN_PROGRESS);
+                    
+                    boolean isStuck = complaint.getStatus() == Complaint.ComplaintStatus.IN_PROGRESS &&
+                                     complaint.getUpdatedAt() != null &&
+                                     complaint.getUpdatedAt().plusDays(3).isBefore(LocalDateTime.now());
+                    
+                    boolean isUnassignedTooLong = complaint.getAssignedTo() == null &&
+                                                complaint.getStatus() == Complaint.ComplaintStatus.NEW &&
+                                                complaint.getCreatedAt().plusDays(2).isBefore(LocalDateTime.now());
+                    
+                    return (isOverdue || isStuck || isUnassignedTooLong) && 
+                           !complaint.isEscalated() &&
+                           complaint.getStatus() != Complaint.ComplaintStatus.RESOLVED &&
+                           complaint.getStatus() != Complaint.ComplaintStatus.CLOSED;
+                })
+                .sorted((c1, c2) -> {
+                    // Sort by priority: overdue first, then by creation date
+                    boolean c1Overdue = c1.getDeadline() != null && c1.getDeadline().isBefore(LocalDateTime.now());
+                    boolean c2Overdue = c2.getDeadline() != null && c2.getDeadline().isBefore(LocalDateTime.now());
+                    
+                    if (c1Overdue && !c2Overdue) return -1;
+                    if (!c1Overdue && c2Overdue) return 1;
+                    
+                    return c1.getCreatedAt().compareTo(c2.getCreatedAt());
+                })
+                .map(ComplaintResponse::new)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * De-escalate complaint - ADMIN only
+     */
+    public ComplaintResponse deEscalateComplaint(Long id, String comment) {
+        Complaint complaint = complaintRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+        
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        User currentUser = userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (!complaint.isEscalated()) {
+            throw new RuntimeException("Complaint is not currently escalated");
+        }
+        
+        complaint.setEscalated(false);
+        complaint.setEscalatedTo(null);
+        // Set status based on assignment
+        if (complaint.getAssignedTo() != null) {
+            complaint.setStatus(Complaint.ComplaintStatus.ASSIGNED);
+        } else {
+            complaint.setStatus(Complaint.ComplaintStatus.UNDER_REVIEW);
+        }
+        
+        String deEscalationComment = "Complaint de-escalated by " + currentUser.getFullName();
+        if (comment != null && !comment.trim().isEmpty()) {
+            deEscalationComment += ". Reason: " + comment.trim();
+        }
+        
+        complaint.addTimelineEntry(complaint.getStatus(), deEscalationComment, false, currentUser);
+        
+        Complaint updatedComplaint = complaintRepository.save(complaint);
+        return new ComplaintResponse(updatedComplaint);
+    }
+
+    /**
+     * Get all officers and admins for escalation - ADMIN only
+     */
+    public List<UserResponse> getAllOfficersAndAdmins() {
+        return userRepository.findAll().stream()
+                .filter(user -> user.getRoles() != null && 
+                       (user.getRoles().contains("OFFICER") || user.getRoles().contains("ADMIN")))
+                .map(UserResponse::new)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Get all officers for assignment - ADMIN only
      */
     public List<UserResponse> getAllOfficers() {
