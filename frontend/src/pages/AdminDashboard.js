@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { complaintService } from '../services/api';
+import AutoEscalationDashboard from '../components/AutoEscalationDashboard';
 import './AdminDashboard.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -20,6 +21,7 @@ const AdminDashboard = () => {
   const [officersAndAdmins, setOfficersAndAdmins] = useState([]);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showEscalateModal, setShowEscalateModal] = useState(false);
+  const [showAutoEscalationDashboard, setShowAutoEscalationDashboard] = useState(false);
   const [assignmentData, setAssignmentData] = useState({
     complaintId: null,
     officerId: '',
@@ -467,6 +469,65 @@ const AdminDashboard = () => {
     }
   };
 
+  const getRowBackgroundColor = (complaint) => {
+    // Don't apply warning colors to completed, resolved, or closed complaints
+    if (complaint.status === 'COMPLETED' || complaint.status === 'RESOLVED' || complaint.status === 'CLOSED') {
+      return 'transparent';
+    }
+    
+    if (complaint.isEscalated) {
+      return '#fff3cd'; // Escalated - yellow
+    }
+    
+    if (complaint.deadline && new Date(complaint.deadline) < new Date()) {
+      return '#f8d7da'; // Overdue - light red
+    }
+    
+    // Check if complaint might be auto-escalated soon
+    const now = new Date();
+    const created = new Date(complaint.createdAt);
+    const hoursOld = (now - created) / (1000 * 60 * 60);
+    
+    // Warning for complaints approaching auto-escalation thresholds
+    if (!complaint.assignedToUsername && hoursOld > 36) { // 36 hours (approaching 48h threshold)
+      return '#fff3cd'; // Warning yellow
+    }
+    
+    if (complaint.urgency === 'HIGH' && hoursOld > 18) { // Approaching 24h threshold
+      return '#ffe6e6'; // Light warning red
+    }
+    
+    return 'transparent';
+  };
+
+  const getEscalationWarning = (complaint) => {
+    // Don't show warnings for escalated or completed complaints
+    if (complaint.isEscalated || complaint.status === 'COMPLETED' || complaint.status === 'RESOLVED' || complaint.status === 'CLOSED') {
+      return null;
+    }
+    
+    const now = new Date();
+    const created = new Date(complaint.createdAt);
+    const hoursOld = (now - created) / (1000 * 60 * 60);
+    
+    if (!complaint.assignedToUsername && hoursOld > 36) {
+      return { text: 'Auto-escalation in ~12h', color: '#f0ad4e' };
+    }
+    
+    if (complaint.urgency === 'HIGH' && hoursOld > 18) {
+      return { text: 'Auto-escalation in ~6h', color: '#d9534f' };
+    }
+    
+    if (complaint.deadline && new Date(complaint.deadline) < new Date()) {
+      const overdueDays = Math.floor((now - new Date(complaint.deadline)) / (1000 * 60 * 60 * 24));
+      if (overdueDays >= 1) {
+        return { text: 'Auto-escalation pending', color: '#d9534f' };
+      }
+    }
+    
+    return null;
+  };
+
   const getStatusClass = (status) => {
     const map = {
       NEW: 'status-new',
@@ -525,8 +586,21 @@ const AdminDashboard = () => {
   const currentComplaints = getCurrentComplaints();
 
   return (
-    <div className="container">
-      <h2>Admin Dashboard</h2>
+      <div className="container">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2>Admin Dashboard</h2>
+        <button 
+          onClick={() => setShowAutoEscalationDashboard(true)}
+          className="btn"
+          style={{
+            backgroundColor: '#6f42c1', color: 'white', padding: '10px 20px',
+            borderRadius: '6px', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: '8px'
+          }}
+        >
+          🤖 Auto-Escalation System
+        </button>
+      </div>
 
       {error && <div className="error">{error}</div>}
       {success && <div className="success">{success}</div>}
@@ -711,15 +785,20 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {currentComplaints.map((c) => (
+              {currentComplaints.map((c) => {
+                const warning = getEscalationWarning(c);
+                return (
                 <tr key={c.id} style={{
-                  backgroundColor: c.isEscalated ? '#fff3cd' : 
-                    (c.deadline && new Date(c.deadline) < new Date() && 
-                     c.status !== 'RESOLVED' && c.status !== 'CLOSED') ? '#f8d7da' : 'transparent'
+                  backgroundColor: getRowBackgroundColor(c)
                 }}>
                   <td>
                     {c.id}
                     {c.isEscalated && <span style={{ marginLeft: '5px', color: '#dc3545', fontSize: '12px' }}>🔺</span>}
+                    {warning && (
+                      <div style={{ fontSize: '10px', color: warning.color, fontWeight: 'bold', marginTop: '2px' }}>
+                        ⚠️ {warning.text}
+                      </div>
+                    )}
                   </td>
                   <td>{c.username}</td>
                   <td>{c.category}</td>
@@ -813,7 +892,8 @@ const AdminDashboard = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         </div>
@@ -870,6 +950,12 @@ const AdminDashboard = () => {
                 }}>
                   <p style={{ margin: '0 0 5px 0', color: '#856404', fontWeight: 'bold' }}>
                     🔺 <strong>ESCALATED COMPLAINT</strong>
+                    {selectedComplaint.escalatedAt && 
+                     selectedComplaint.escalatedAt.includes('AUTOMATED') && 
+                     <span style={{ marginLeft: '10px', fontSize: '12px', backgroundColor: '#6f42c1', color: 'white', padding: '2px 6px', borderRadius: '3px' }}>
+                       🤖 AUTO
+                     </span>
+                    }
                   </p>
                   {selectedComplaint.escalatedToUsername && (
                     <p style={{ margin: '0 0 5px 0' }}><strong>Escalated To:</strong> 
@@ -1286,6 +1372,11 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Auto-Escalation Dashboard */}
+      {showAutoEscalationDashboard && (
+        <AutoEscalationDashboard onClose={() => setShowAutoEscalationDashboard(false)} />
       )}
 
       {/* Additional CSS for new elements */}

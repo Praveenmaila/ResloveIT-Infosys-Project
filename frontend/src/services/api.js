@@ -115,6 +115,20 @@ export const complaintService = {
   getEscalatedComplaints: () => api.get('/complaints/admin/escalated'),
   
   getUnresolvedComplaints: () => api.get('/complaints/admin/unresolved'),
+  
+  // Auto-escalation management
+  getEscalationStats: () => api.get('/auto-escalation/stats'),
+  
+  getEscalationCandidates: () => api.get('/auto-escalation/candidates'),
+  
+  triggerEscalationCheck: () => api.post('/auto-escalation/trigger'),
+  
+  getEscalationConfig: () => api.get('/auto-escalation/config'),
+  
+  testAutoEscalationService: () => api.get('/auto-escalation/test'),
+  
+  // Health check (no auth required)
+  autoEscalationHealthCheck: () => api.get('/auto-escalation/health'),
 };
 
 export default api;

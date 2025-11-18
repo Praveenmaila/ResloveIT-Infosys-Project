@@ -98,8 +98,10 @@ const OfficerDashboard = () => {
     return map[urgency] || 'urgency-medium';
   };
 
-  const isOverdue = (deadline) => {
+  const isOverdue = (deadline, status) => {
     if (!deadline) return false;
+    // Don't consider completed complaints as overdue
+    if (status === 'COMPLETED' || status === 'RESOLVED' || status === 'CLOSED') return false;
     return new Date(deadline) < new Date();
   };
 
@@ -112,7 +114,12 @@ const OfficerDashboard = () => {
     return diffDays;
   };
 
-  const getDeadlineClass = (deadline) => {
+  const getDeadlineClass = (deadline, status) => {
+    // Don't apply warning colors to completed complaints
+    if (status === 'COMPLETED' || status === 'RESOLVED' || status === 'CLOSED') {
+      return 'deadline-completed';
+    }
+    
     const days = getDaysUntilDeadline(deadline);
     if (days === null) return '';
     if (days < 0) return 'deadline-overdue';
@@ -144,7 +151,7 @@ const OfficerDashboard = () => {
                 <strong>Pending:</strong> {assignedComplaints.filter(c => c.status !== 'COMPLETED' && c.status !== 'RESOLVED').length}
               </div>
               <div className="stat-card" style={{ padding: 10, borderRadius: 5, backgroundColor: '#ffebee' }}>
-                <strong>Overdue:</strong> {assignedComplaints.filter(c => isOverdue(c.deadline)).length}
+                <strong>Overdue:</strong> {assignedComplaints.filter(c => isOverdue(c.deadline, c.status)).length}
               </div>
               <div className="stat-card" style={{ padding: 10, borderRadius: 5, backgroundColor: '#e8f5e8' }}>
                 <strong>Completed:</strong> {assignedComplaints.filter(c => c.status === 'COMPLETED').length}
@@ -170,7 +177,7 @@ const OfficerDashboard = () => {
                   {assignedComplaints.map((complaint) => {
                     const daysLeft = getDaysUntilDeadline(complaint.deadline);
                     return (
-                      <tr key={complaint.id} className={isOverdue(complaint.deadline) ? 'row-overdue' : ''}>
+                      <tr key={complaint.id} className={isOverdue(complaint.deadline, complaint.status) ? 'row-overdue' : ''}>
                         <td>{complaint.id}</td>
                         <td>{complaint.username}</td>
                         <td>{complaint.category}</td>
@@ -190,7 +197,7 @@ const OfficerDashboard = () => {
                         </td>
                         <td>
                           {complaint.deadline ? (
-                            <span className={getDeadlineClass(complaint.deadline)}>
+                            <span className={getDeadlineClass(complaint.deadline, complaint.status)}>
                               {new Date(complaint.deadline).toLocaleDateString()}
                             </span>
                           ) : (
@@ -199,7 +206,7 @@ const OfficerDashboard = () => {
                         </td>
                         <td>
                           {daysLeft !== null ? (
-                            <span className={getDeadlineClass(complaint.deadline)}>
+                            <span className={getDeadlineClass(complaint.deadline, complaint.status)}>
                               {daysLeft < 0 ? `${Math.abs(daysLeft)} days overdue` : 
                                daysLeft === 0 ? 'Today' : 
                                `${daysLeft} days left`}
@@ -263,9 +270,9 @@ const OfficerDashboard = () => {
               
               {selectedComplaint.deadline && (
                 <p><strong>Deadline:</strong> 
-                  <span className={getDeadlineClass(selectedComplaint.deadline)} style={{ marginLeft: 10 }}>
+                  <span className={getDeadlineClass(selectedComplaint.deadline, selectedComplaint.status)} style={{ marginLeft: 10 }}>
                     {new Date(selectedComplaint.deadline).toLocaleString()}
-                    {isOverdue(selectedComplaint.deadline) && <span style={{ color: 'red', fontWeight: 'bold' }}> (OVERDUE)</span>}
+                    {isOverdue(selectedComplaint.deadline, selectedComplaint.status) && <span style={{ color: 'red', fontWeight: 'bold' }}> (OVERDUE)</span>}
                   </span>
                 </p>
               )}
@@ -351,6 +358,7 @@ const OfficerDashboard = () => {
         .deadline-urgent { color: #ff9800; font-weight: bold; }
         .deadline-warning { color: #f57c00; }
         .deadline-normal { color: #388e3c; }
+        .deadline-completed { color: #666; font-style: italic; }
         
         .row-overdue { background-color: #ffebee; }
         

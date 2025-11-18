@@ -65,6 +65,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/complaints/submit/anonymous").permitAll()
                 .requestMatchers("/api/complaints/public").permitAll()
                 .requestMatchers("/api/complaints/{id}/timeline").permitAll()
+                .requestMatchers("/api/auto-escalation/health").permitAll()
                 .anyRequest().authenticated()
             );
         
