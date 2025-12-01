@@ -27,9 +27,7 @@ public class NotificationService {
     
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
-    
-    @Autowired
-    private EmailService emailService;
+    private final EmailService emailService;
     
     /**
      * Create and send notification for complaint escalation
@@ -53,7 +51,7 @@ public class NotificationService {
             }
             
             // Notify all admins about the escalation
-            List<User> admins = userRepository.findByRoles(Role.ADMIN);
+            List<User> admins = userRepository.findByRolesContaining("ROLE_ADMIN");
             for (User admin : admins) {
                 createNotification(
                     admin,

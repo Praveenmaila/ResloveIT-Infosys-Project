@@ -96,7 +96,7 @@ public class EmailService {
                 complaint.getCategory(),
                 complaint.getUrgency(),
                 complaint.getStatus(),
-                complaint.getUsername(),
+                complaint.getUser() != null ? complaint.getUser().getUsername() : "Anonymous",
                 escalationReason,
                 appName
             );

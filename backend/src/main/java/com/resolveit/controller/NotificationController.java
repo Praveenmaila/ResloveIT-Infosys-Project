@@ -2,7 +2,7 @@ package com.resolveit.controller;
 
 import com.resolveit.entity.Notification;
 import com.resolveit.service.NotificationService;
-import com.resolveit.security.UserPrincipal;
+import com.resolveit.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,11 +36,11 @@ public class NotificationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         Pageable pageable = PageRequest.of(page, size);
         
         Page<Notification> notifications = notificationService.getUserNotifications(
-                userPrincipal.getId(), pageable);
+                userDetails.getId(), pageable);
         
         return ResponseEntity.ok(notifications);
     }
@@ -51,10 +51,10 @@ public class NotificationController {
     @GetMapping("/unread")
     @PreAuthorize("hasRole('USER') or hasRole('OFFICER') or hasRole('ADMIN')")
     public ResponseEntity<List<Notification>> getUnreadNotifications(Authentication authentication) {
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         
         List<Notification> unreadNotifications = notificationService.getUnreadNotifications(
-                userPrincipal.getId());
+                userDetails.getId());
         
         return ResponseEntity.ok(unreadNotifications);
     }
@@ -65,9 +65,9 @@ public class NotificationController {
     @GetMapping("/unread/count")
     @PreAuthorize("hasRole('USER') or hasRole('OFFICER') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> getUnreadCount(Authentication authentication) {
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         
-        long count = notificationService.getUnreadNotificationCount(userPrincipal.getId());
+        long count = notificationService.getUnreadNotificationCount(userDetails.getId());
         
         return ResponseEntity.ok(Map.of(
             "unreadCount", count,
@@ -78,16 +78,16 @@ public class NotificationController {
     /**
      * Mark a specific notification as read
      */
-    @PUT("/{notificationId}/read")
+    @PutMapping("/{notificationId}/read")
     @PreAuthorize("hasRole('USER') or hasRole('OFFICER') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> markAsRead(
             @PathVariable Long notificationId,
             Authentication authentication) {
         
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         
         try {
-            notificationService.markAsRead(notificationId, userPrincipal.getId());
+            notificationService.markAsRead(notificationId, userDetails.getId());
             return ResponseEntity.ok(Map.of("message", "Notification marked as read"));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -98,13 +98,13 @@ public class NotificationController {
     /**
      * Mark all notifications as read for current user
      */
-    @PUT("/read-all")
+    @PutMapping("/read-all")
     @PreAuthorize("hasRole('USER') or hasRole('OFFICER') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> markAllAsRead(Authentication authentication) {
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         
         try {
-            notificationService.markAllAsRead(userPrincipal.getId());
+            notificationService.markAllAsRead(userDetails.getId());
             return ResponseEntity.ok(Map.of("message", "All notifications marked as read"));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
