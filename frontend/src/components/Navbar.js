@@ -56,6 +56,11 @@ const Navbar = () => {
           <Link to="/officer/dashboard">👮‍♂️ Officer Dashboard</Link>
         )}
         
+        {/* Reports - Show for Admin and Officer users */}
+        {user && (isAdmin() || isOfficer()) && (
+          <Link to="/reports">📊 Reports</Link>
+        )}
+        
         {user && (
           <div className="d-flex align-items-center gap-3" style={{ marginLeft: 'var(--space-4)' }}>
             <NotificationCenter />

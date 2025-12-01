@@ -153,4 +153,60 @@ export const notificationService = {
   getNotificationStats: () => api.get('/notifications/stats'),
 };
 
+export const reportService = {
+  // Dashboard analytics
+  getDashboardStats: (params = {}) => {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        if (Array.isArray(value)) {
+          value.forEach(v => searchParams.append(key, v));
+        } else {
+          searchParams.append(key, value);
+        }
+      }
+    });
+    return api.get(`/reports/dashboard?${searchParams.toString()}`);
+  },
+  
+  // Export functions
+  exportCSV: (params = {}) => {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        if (Array.isArray(value)) {
+          value.forEach(v => searchParams.append(key, v));
+        } else {
+          searchParams.append(key, value);
+        }
+      }
+    });
+    return api.get(`/reports/export/csv?${searchParams.toString()}`, {
+      responseType: 'blob'
+    });
+  },
+  
+  exportPDF: (params = {}) => {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        if (Array.isArray(value)) {
+          value.forEach(v => searchParams.append(key, v));
+        } else {
+          searchParams.append(key, value);
+        }
+      }
+    });
+    return api.get(`/reports/export/pdf?${searchParams.toString()}`, {
+      responseType: 'blob'
+    });
+  },
+  
+  // Filter options
+  getFilterOptions: () => api.get('/reports/filters'),
+  
+  // Admin summary
+  getReportsSummary: () => api.get('/reports/summary'),
+};
+
 export default api;

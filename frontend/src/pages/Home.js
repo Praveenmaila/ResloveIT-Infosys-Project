@@ -5,6 +5,15 @@ import { useAuth } from '../context/AuthContext';
 const Home = () => {
   const { user, isAdmin } = useAuth();
 
+  // Debug information
+  React.useEffect(() => {
+    if (user) {
+      console.log('DEBUG - Home page user:', user);
+      console.log('DEBUG - User roles:', user.roles);
+      console.log('DEBUG - isAdmin():', isAdmin());
+    }
+  }, [user, isAdmin]);
+
   return (
     <div className="container">
       <div className="card">
