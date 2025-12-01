@@ -40,6 +40,9 @@ public class ComplaintService {
     @Autowired
     private ComplaintTimelineRepository timelineRepository;
     
+    @Autowired
+    private NotificationService notificationService;
+    
     @Value("${file.upload-dir}")
     private String uploadDir;
     
@@ -262,6 +265,10 @@ public class ComplaintService {
         
         Complaint updatedComplaint = complaintRepository.save(complaint);
         System.out.println("Complaint saved successfully with ID: " + updatedComplaint.getId());
+        
+        // Send notifications for complaint assignment
+        notificationService.notifyComplaintAssignment(updatedComplaint, assignToUser);
+        
         System.out.println("=== ASSIGN COMPLAINT COMPLETE ===");
         
         return new ComplaintResponse(updatedComplaint);

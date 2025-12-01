@@ -131,4 +131,26 @@ export const complaintService = {
   autoEscalationHealthCheck: () => api.get('/auto-escalation/health'),
 };
 
+export const notificationService = {
+  // Get paginated notifications
+  getUserNotifications: (page = 0, size = 10) => 
+    api.get(`/notifications?page=${page}&size=${size}`),
+  
+  // Get unread notifications
+  getUnreadNotifications: () => api.get('/notifications/unread'),
+  
+  // Get unread count
+  getUnreadCount: () => api.get('/notifications/unread/count'),
+  
+  // Mark notification as read
+  markAsRead: (notificationId) => 
+    api.put(`/notifications/${notificationId}/read`),
+  
+  // Mark all notifications as read
+  markAllAsRead: () => api.put('/notifications/read-all'),
+  
+  // Get notification stats (admin only)
+  getNotificationStats: () => api.get('/notifications/stats'),
+};
+
 export default api;

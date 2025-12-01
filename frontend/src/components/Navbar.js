@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import NotificationCenter from './NotificationCenter';
 
 const Navbar = () => {
   const { user, logout, isAdmin, isOfficer, isStaff } = useAuth();
@@ -10,6 +11,16 @@ const Navbar = () => {
     if (isOfficer()) return 'Officer';
     return 'User';
   };
+
+  // Debug: Log user roles
+  React.useEffect(() => {
+    if (user) {
+      console.log('Current user:', user);
+      console.log('User roles:', user.roles);
+      console.log('isAdmin():', isAdmin());
+      console.log('isOfficer():', isOfficer());
+    }
+  }, [user, isAdmin, isOfficer]);
 
   return (
     <div className="navbar">
@@ -27,6 +38,7 @@ const Navbar = () => {
           </>
         )}
         
+        {/* Regular Users - Only show if user is NOT admin and NOT officer */}
         {user && !isAdmin() && !isOfficer() && (
           <>
             <Link to="/submit-complaint">📝 Submit Complaint</Link>
@@ -34,16 +46,19 @@ const Navbar = () => {
           </>
         )}
         
+        {/* Admin Users - Show admin dashboard */}
         {user && isAdmin() && (
           <Link to="/admin/dashboard">👨‍💼 Admin Dashboard</Link>
         )}
         
+        {/* Officer Users - Show officer dashboard (officers should not see user options) */}
         {user && isOfficer() && (
           <Link to="/officer/dashboard">👮‍♂️ Officer Dashboard</Link>
         )}
         
         {user && (
           <div className="d-flex align-items-center gap-3" style={{ marginLeft: 'var(--space-4)' }}>
+            <NotificationCenter />
             <div style={{ 
               display: 'flex', 
               alignItems: 'center', 

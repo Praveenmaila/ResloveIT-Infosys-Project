@@ -880,7 +880,7 @@ const AdminDashboard = () => {
                           Assign
                         </button>
                       )}
-                      {c.assignedToUsername && (
+                      {c.assignedToUsername && c.status !== 'COMPLETED' && c.status !== 'RESOLVED' && c.status !== 'CLOSED' && (
                         <button 
                           onClick={() => unassignComplaint(c.id)} 
                           className="btn" 
@@ -1055,7 +1055,7 @@ const AdminDashboard = () => {
                   </button>
                 )}
                 
-                {selectedComplaint.assignedToUsername && (
+                {selectedComplaint.assignedToUsername && selectedComplaint.status !== 'COMPLETED' && selectedComplaint.status !== 'RESOLVED' && selectedComplaint.status !== 'CLOSED' && (
                   <button 
                     onClick={() => unassignComplaint(selectedComplaint.id)} 
                     className="btn btn-warning btn-sm"

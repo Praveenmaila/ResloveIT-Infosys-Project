@@ -23,6 +23,9 @@ public class AutoEscalationService {
     @Autowired
     private UserRepository userRepository;
     
+    @Autowired
+    private NotificationService notificationService;
+    
     // Escalation thresholds (in hours) - as per requirements
     private static final int UNASSIGNED_ESCALATION_THRESHOLD = 48;  // 2 days for unassigned complaints
     private static final int OVERDUE_ESCALATION_THRESHOLD = 24;     // 1 day after deadline
@@ -218,9 +221,12 @@ public class AutoEscalationService {
             // Save the complaint
             complaintRepository.save(complaint);
             
+            // Send notifications to relevant parties
+            notificationService.notifyComplaintEscalation(complaint);
+            
             System.out.println("Successfully auto-escalated complaint ID: " + complaint.getId() + 
                              " to " + (escalationHandler != null ? escalationHandler.getUsername() : "system") + 
-                             ". Reason: " + reason);
+                             ". Reason: " + reason + ". Notifications sent.");
             
         } catch (Exception e) {
             System.err.println("Error escalating complaint ID " + complaint.getId() + ": " + e.getMessage());
