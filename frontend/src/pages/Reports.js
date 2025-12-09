@@ -369,7 +369,7 @@ const Reports = () => {
       <div className="reports-content">
         <div className="reports-header">
           <div className="header-content">
-            <h1 className="reports-title">📊 Reports & Analytics</h1>
+            <h1 className="reports-title"> 📊 Reports & Analytics</h1>
             <p className="reports-subtitle">Complaint trends, performance metrics, and export tools</p>
           </div>
           <div className="connection-status">
