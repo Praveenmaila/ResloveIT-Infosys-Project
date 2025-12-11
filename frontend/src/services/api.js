@@ -33,15 +33,12 @@ export const authService = {
 export const complaintService = {
   // Complaint submission
   createAnonymousComplaint: (formData) => 
-    axios.post(`${API_URL}/complaints/submit/anonymous`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }),
+    axios.post(`${API_URL}/complaints/submit/anonymous`, formData),
   
   createComplaint: (formData) => {
     const token = localStorage.getItem('token');
     return axios.post(`${API_URL}/complaints/submit`, formData, {
       headers: { 
-        'Content-Type': 'multipart/form-data',
         'Authorization': `Bearer ${token}`
       }
     });

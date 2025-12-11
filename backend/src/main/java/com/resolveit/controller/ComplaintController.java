@@ -397,4 +397,17 @@ public class ComplaintController {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
         }
     }
+    
+    /**
+     * Download/View uploaded file - Authenticated users only
+     */
+    @GetMapping("/files/{filename:.+}")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('OFFICER') or hasAuthority('ADMIN')")
+    public ResponseEntity<?> getFile(@PathVariable String filename) {
+        try {
+            return complaintService.getFile(filename);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

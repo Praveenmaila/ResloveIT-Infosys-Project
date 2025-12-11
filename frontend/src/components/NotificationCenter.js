@@ -42,7 +42,8 @@ const NotificationCenter = () => {
       setPage(pageNum);
     } catch (err) {
       console.error('Error fetching notifications:', err);
-      setError('Failed to fetch notifications');
+      // Don't set error state on fetch failure - just silently fail
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
@@ -55,7 +56,9 @@ const NotificationCenter = () => {
       const response = await notificationService.getUnreadCount();
       setUnreadCount(response.data.unreadCount || 0);
     } catch (err) {
-      console.error('Error fetching unread count:', err);
+      // Silently fail - don't log every error
+      // This is just a notification count, not critical
+      setUnreadCount(0);
     }
   };
 

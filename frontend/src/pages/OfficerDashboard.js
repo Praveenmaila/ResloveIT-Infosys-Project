@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { complaintService } from '../services/api';
+import FileViewer from '../components/FileViewer';
 import './AdminDashboard.css'; // Reusing the same styles
 
 const OfficerDashboard = () => {
@@ -281,9 +282,7 @@ const OfficerDashboard = () => {
               <p><strong>Description:</strong></p>
               <p className="description">{selectedComplaint.description}</p>
               
-              {selectedComplaint.attachmentPath && (
-                <p><strong>Attachment:</strong> {selectedComplaint.attachmentPath}</p>
-              )}
+              <FileViewer attachmentPath={selectedComplaint.attachmentPath} />
             </div>
 
             {/* Action Buttons */}

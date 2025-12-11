@@ -23,7 +23,34 @@ const SubmitComplaint = () => {
   };
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const selectedFile = e.target.files[0];
+    
+    if (selectedFile) {
+      // Check file size (50MB = 50 * 1024 * 1024 bytes)
+      const maxSize = 50 * 1024 * 1024;
+      if (selectedFile.size > maxSize) {
+        setError('File size exceeds 50MB. Please choose a smaller file.');
+        e.target.value = ''; // Reset input
+        return;
+      }
+      
+      // Check file type
+      const allowedTypes = [
+        'image/', 'video/', 'application/pdf', 
+        'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      
+      const isAllowed = allowedTypes.some(type => selectedFile.type.startsWith(type));
+      if (!isAllowed) {
+        setError('Invalid file type. Please upload an image, video, PDF, or DOC file.');
+        e.target.value = ''; // Reset input
+        return;
+      }
+      
+      setError(''); // Clear any previous errors
+      setFile(selectedFile);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -47,7 +74,14 @@ const SubmitComplaint = () => {
       setFile(null);
       e.target.reset();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit complaint');
+      console.error('Error submitting complaint:', err);
+      if (err.response?.status === 413) {
+        setError('File size is too large. Please upload a file smaller than 50MB.');
+      } else if (err.response?.status === 415) {
+        setError('Unsupported file type. Please upload an image, video, PDF, or DOC file.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to submit complaint. Please try again.');
+      }
     }
   };
 
@@ -99,8 +133,11 @@ const SubmitComplaint = () => {
             <input
               type="file"
               onChange={handleFileChange}
-              accept="image/*,.pdf,.doc,.docx"
+              accept="image/*,video/*,.pdf,.doc,.docx"
             />
+            <small style={{ color: '#666', fontSize: '12px', marginTop: '5px', display: 'block' }}>
+              Supported formats: Images, Videos (MP4, AVI, MOV, etc.), PDF, DOC, DOCX. Max size: 50MB
+            </small>
           </div>
           <div className="form-group">
             <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

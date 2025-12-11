@@ -30,7 +30,7 @@ public class NotificationController {
      * Get paginated notifications for current user
      */
     @GetMapping
-    @PreAuthorize("hasRole('USER') or hasRole('OFFICER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('OFFICER') or hasAuthority('ADMIN')")
     public ResponseEntity<Page<Notification>> getUserNotifications(
             Authentication authentication,
             @RequestParam(defaultValue = "0") int page,
@@ -49,7 +49,7 @@ public class NotificationController {
      * Get unread notifications for current user
      */
     @GetMapping("/unread")
-    @PreAuthorize("hasRole('USER') or hasRole('OFFICER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('OFFICER') or hasAuthority('ADMIN')")
     public ResponseEntity<List<Notification>> getUnreadNotifications(Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         
@@ -63,7 +63,7 @@ public class NotificationController {
      * Get unread notification count for current user
      */
     @GetMapping("/unread/count")
-    @PreAuthorize("hasRole('USER') or hasRole('OFFICER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('OFFICER') or hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, Object>> getUnreadCount(Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         
@@ -79,7 +79,7 @@ public class NotificationController {
      * Mark a specific notification as read
      */
     @PutMapping("/{notificationId}/read")
-    @PreAuthorize("hasRole('USER') or hasRole('OFFICER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('OFFICER') or hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, String>> markAsRead(
             @PathVariable Long notificationId,
             Authentication authentication) {
@@ -99,7 +99,7 @@ public class NotificationController {
      * Mark all notifications as read for current user
      */
     @PutMapping("/read-all")
-    @PreAuthorize("hasRole('USER') or hasRole('OFFICER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('OFFICER') or hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, String>> markAllAsRead(Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         
@@ -116,7 +116,7 @@ public class NotificationController {
      * Get notification statistics (Admin only)
      */
     @GetMapping("/stats")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, Object>> getNotificationStats() {
         // This could include system-wide notification statistics
         // For now, return basic info

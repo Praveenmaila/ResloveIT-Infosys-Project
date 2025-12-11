@@ -3,6 +3,7 @@ import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { complaintService } from '../services/api';
 import AutoEscalationDashboard from '../components/AutoEscalationDashboard';
+import FileViewer from '../components/FileViewer';
 import './AdminDashboard.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -977,9 +978,7 @@ const AdminDashboard = () => {
               <p><strong>Created:</strong> {selectedComplaint.createdAt ? new Date(selectedComplaint.createdAt).toLocaleString() : '-'}</p>
               <p><strong>Description:</strong></p>
               <p className="description">{selectedComplaint.description}</p>
-              {selectedComplaint.attachmentPath && (
-                <p><strong>Attachment:</strong> {selectedComplaint.attachmentPath}</p>
-              )}
+              <FileViewer attachmentPath={selectedComplaint.attachmentPath} />
             </div>
 
             <div style={{ 
