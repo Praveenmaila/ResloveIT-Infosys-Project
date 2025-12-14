@@ -561,7 +561,31 @@ const Reports = () => {
                         maintainAspectRatio: false,
                         plugins: {
                           legend: {
-                            position: 'top'
+                            position: 'top',
+                            labels: {
+                              color: 'white',
+                              font: {
+                                size: 12
+                              }
+                            }
+                          }
+                        },
+                        scales: {
+                          x: {
+                            ticks: {
+                              color: 'rgba(255, 255, 255, 0.9)'
+                            },
+                            grid: {
+                              color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                          },
+                          y: {
+                            ticks: {
+                              color: 'rgba(255, 255, 255, 0.9)'
+                            },
+                            grid: {
+                              color: 'rgba(255, 255, 255, 0.1)'
+                            }
                           }
                         },
                         elements: {
@@ -590,6 +614,24 @@ const Reports = () => {
                           legend: {
                             display: false
                           }
+                        },
+                        scales: {
+                          x: {
+                            ticks: {
+                              color: 'rgba(255, 255, 255, 0.9)'
+                            },
+                            grid: {
+                              color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                          },
+                          y: {
+                            ticks: {
+                              color: 'rgba(255, 255, 255, 0.9)'
+                            },
+                            grid: {
+                              color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                          }
                         }
                       }} 
                     />
@@ -609,7 +651,13 @@ const Reports = () => {
                         maintainAspectRatio: false,
                         plugins: {
                           legend: {
-                            position: 'bottom'
+                            position: 'bottom',
+                            labels: {
+                              color: 'white',
+                              font: {
+                                size: 12
+                              }
+                            }
                           }
                         }
                       }} 

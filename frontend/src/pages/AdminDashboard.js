@@ -978,7 +978,7 @@ const AdminDashboard = () => {
               <p><strong>Created:</strong> {selectedComplaint.createdAt ? new Date(selectedComplaint.createdAt).toLocaleString() : '-'}</p>
               <p><strong>Description:</strong></p>
               <p className="description">{selectedComplaint.description}</p>
-              <FileViewer attachmentPath={selectedComplaint.attachmentPath} />
+              <FileViewer attachmentPath={selectedComplaint.attachmentPath} complaint={selectedComplaint} />
             </div>
 
             <div style={{ 
